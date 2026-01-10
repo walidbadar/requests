@@ -1,0 +1,19 @@
+# Copyright (c) 2025 Muhammad Waleed Badar
+# SPDX-License-Identifier: Apache-2.0
+
+manifest:
+  remotes:
+    - name: zephyrproject-rtos
+      url-base: https://github.com/zephyrproject-rtos
+
+  projects:
+    - name: zephyr
+      remote: zephyrproject-rtos
+      revision: v4.3.0
+      import:
+        # By using name-allowlist we can clone only the modules that are
+        # strictly needed by the application.
+        name-allowlist:
+          - picolibc
+          - mbedtls
+          - hal_espressif

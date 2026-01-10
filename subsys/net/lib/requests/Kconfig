@@ -1,0 +1,67 @@
+# Copyright (c) 2025 Muhammad Waleed Badar
+# SPDX-License-Identifier: Apache-2.0
+
+menuconfig REQUESTS
+	bool "Enable Requests library Support"
+	depends on NETWORKING
+	select NET_CONNECTION_MANAGER
+	select POSIX_API
+	select HTTP_CLIENT
+	select DNS_RESOLVER
+	help
+	  Enable the requests library for performing HTTP(S) requests.
+
+if REQUESTS
+
+menu "Requests Configuration"
+
+module = REQUESTS
+module-str = requests
+source "subsys/logging/Kconfig.template.log_config"
+
+config REQUESTS_URL_LEN
+	int "Default URL lenght"
+	default 128
+	help
+	  The default URL lenght used for HTTP requests.
+
+config REQUESTS_HTTP_PORT
+	int "Default HTTP port"
+	default 80
+	help
+	  The default port used for HTTP requests.
+
+config REQUESTS_HTTPS_PORT
+	int "Default HTTPS port"
+	default 443
+	help
+	  The default port used for HTTPS requests.
+
+config REQUESTS_SSL_CERTS
+	string "Select SSL Certificate"
+	help
+	  The default SSL Certificate used for requests.
+
+config REQUESTS_SHELL
+	bool "Enable shell commands"
+	depends on SHELL
+	select LOG
+	help
+	  Enable Zephyr shell commands for the Requests library.
+	  This allows you to perform HTTP GET and POST requests directly
+	  from the Zephyr shell, e.g.:
+	    uart:~$ requests get http://google.com/
+
+if REQUESTS_SHELL
+
+config SHELL_STACK_SIZE
+	default 4096
+
+config SHELL_WILDCARD
+	default n
+
+endif # REQUESTS_SHELL
+
+endmenu
+
+endif # REQUESTS
