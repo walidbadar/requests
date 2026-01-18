@@ -75,11 +75,6 @@ int requests_dns_lookup(struct requests_ctx *ctx)
 	int ret;
 	uint16_t dns_id;
 
-	if (!ctx) {
-		LOG_ERR("Invalid argument");
-		return -EINVAL;
-	}
-
 	if (!strlen(ctx->url_fields.hostname)) {
 		LOG_ERR("Invalid hostname");
 		return -EINVAL;
@@ -117,11 +112,6 @@ static int requests_connect_setup(struct requests_ctx *ctx)
 {
 	int ret = 0;
 
-	if (!ctx) {
-		LOG_ERR("Invalid argument");
-		return -EINVAL;
-	}
-
 	if (IS_ENABLED(CONFIG_NET_SOCKETS_SOCKOPT_TLS)) {
 		sec_tag_t sec_tag_list[] = {
 			CA_CERTIFICATE_TAG,
@@ -158,11 +148,6 @@ static int requests_connect_setup(struct requests_ctx *ctx)
 int requests_connect(struct requests_ctx *ctx)
 {
 	int ret;
-
-	if (!ctx) {
-		LOG_ERR("Invalid argument");
-		return -EINVAL;
-	}
 
 	ret = requests_connect_setup(ctx);
 	if (ret < 0) {
