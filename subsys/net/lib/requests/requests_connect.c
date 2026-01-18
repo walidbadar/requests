@@ -110,39 +110,53 @@ int requests_dns_lookup(struct requests_ctx *ctx)
 
 static int requests_connect_setup(struct requests_ctx *ctx)
 {
-	int ret = 0;
+	int ret;
 
 	if (IS_ENABLED(CONFIG_NET_SOCKETS_SOCKOPT_TLS)) {
-		sec_tag_t sec_tag_list[] = {
-			CA_CERTIFICATE_TAG,
-		};
-
 		ctx->sockfd = socket(AF_INET, SOCK_STREAM, IPPROTO_TLS_1_2);
-		if (ctx->sockfd >= 0) {
-			ret = setsockopt(ctx->sockfd, SOL_TLS, TLS_SEC_TAG_LIST, sec_tag_list,
-					 sizeof(sec_tag_list));
-			if (ret < 0) {
-				LOG_ERR("Failed to set secure option (%d)", -errno);
-			}
-
-			ret = setsockopt(ctx->sockfd, SOL_TLS, TLS_HOSTNAME,
-					 ctx->url_fields.hostname,
-					 sizeof(ctx->url_fields.hostname));
-			if (ret < 0) {
-				LOG_ERR("Failed to set TLS_HOSTNAME: %s option (%d)",
-					ctx->url_fields.hostname, -errno);
-			}
-		}
 	} else {
 		ctx->sockfd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 	}
 
 	if (ctx->sockfd < 0) {
 		LOG_ERR("Failed to create socket (%d)", -errno);
-		ret = -errno;
+		return -errno;
 	}
 
-	return ret;
+	if (IS_ENABLED(CONFIG_NET_SOCKETS_SOCKOPT_TLS)) {
+		sec_tag_t sec_tag_list[] = {
+			CA_CERTIFICATE_TAG,
+		};
+
+		if (ctx->is_ssl_verifyhost) {
+			ret = setsockopt(ctx->sockfd, SOL_TLS, TLS_HOSTNAME,
+						ctx->url_fields.hostname,
+						sizeof(ctx->url_fields.hostname));
+			if (ret < 0) {
+				LOG_ERR("Failed to set TLS_HOSTNAME %s option (%d)",
+					ctx->url_fields.hostname, ret);
+				return ret;
+			}
+		}
+
+		if (ctx->is_ssl_verifypeer) {
+			ret = setsockopt(ctx->sockfd, SOL_TLS, TLS_SEC_TAG_LIST, sec_tag_list,
+					 sizeof(sec_tag_list));
+			if (ret < 0) {
+				LOG_ERR("Failed to set TLS_SEC_TAG_LIST option (%d)", ret);
+				return ret;
+			}
+		} else {
+			ret = setsockopt(ctx->sockfd, SOL_TLS, TLS_PEER_VERIFY,
+					 (int *)&ctx->is_ssl_verifypeer, sizeof(int));
+			if (ret < 0) {
+				LOG_ERR("Failed to set TLS_PEER_VERIFY option (%d)", ret);
+				return ret;
+			}
+		}
+	}
+
+	return 0;
 }
 
 int requests_connect(struct requests_ctx *ctx)

@@ -42,6 +42,18 @@ config REQUESTS_SSL_CERTS
 	help
 	  The default SSL Certificate used for requests.
 
+config REQUESTS_SSL_VERIFYHOST
+	bool "Verify SSL host name"
+	default y
+	help
+	  Validate the server host name against the certificate.
+
+config REQUESTS_SSL_VERIFYPEER
+	bool "Verify SSL peer certificate"
+	default y
+	help
+	  Validate the server SSL/TLS certificate.
+
 config REQUESTS_SHELL
 	bool "Enable shell commands"
 	depends on SHELL

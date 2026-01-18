@@ -17,6 +17,14 @@ int requests_init(struct requests_ctx *ctx, const uint8_t *url)
 	int ret;
 	memset(ctx, 0, sizeof(struct requests_ctx));
 
+	if (IS_ENABLED(CONFIG_REQUESTS_SSL_VERIFYHOST)) {
+		ctx->is_ssl_verifyhost = true;
+	}
+
+	if (IS_ENABLED(CONFIG_REQUESTS_SSL_VERIFYPEER)) {
+		ctx->is_ssl_verifypeer = true;
+	}
+
 	ret = requests_url_parser(ctx, url);
 	if (ret < 0) {
 		LOG_ERR("Failed to parse URL (%d)", ret);
@@ -35,17 +43,23 @@ int requests_init(struct requests_ctx *ctx, const uint8_t *url)
 void requests_setopt(struct requests_ctx *ctx, enum requests_options option, void *parameter)
 {
 	switch (option) {
-	case REQUESTS_WRITEFUNCTION:
-		ctx->cb = (http_response_cb_t)parameter;
-		break;
-	case REQUESTS_PROTOCOL:
-		strncpy(ctx->protocol, (char *)parameter, sizeof(ctx->protocol) - 1);
-		break;
 	case REQUESTS_HTTPHEADER:
-		strncpy(ctx->headers, (char *)parameter, sizeof(ctx->headers) - 1);
+		strncpy(ctx->headers, (uint8_t *)parameter, sizeof(ctx->headers) - 1);
 		break;
 	case REQUESTS_POSTFIELDS:
-		strncpy(ctx->payload, (char *)parameter, sizeof(ctx->payload) - 1);
+		strncpy(ctx->payload, (uint8_t *)parameter, sizeof(ctx->payload) - 1);
+		break;
+	case REQUESTS_PROTOCOL:
+		strncpy(ctx->protocol, (uint8_t *)parameter, sizeof(ctx->protocol) - 1);
+		break;
+	case REQUESTS_SSL_VERIFYHOST:
+		ctx->is_ssl_verifyhost = *((bool *)parameter);
+		break;
+	case REQUESTS_SSL_VERIFYPEER:
+		ctx->is_ssl_verifypeer = *((bool *)parameter);
+		break;
+	case REQUESTS_WRITEFUNCTION:
+		ctx->cb = (http_response_cb_t)parameter;
 		break;
 	default:
 		break;

@@ -35,8 +35,8 @@ enum requests_options {
 	REQUESTS_HTTPHEADER,     /**< Set custom HTTP headers (uint8_t*) */
 	REQUESTS_POSTFIELDS,     /**< Set POST data payload (uint8_t*) */
 	REQUESTS_PROTOCOL,       /**< Set HTTP protocol version (uint8_t*) */
-	REQUESTS_SSL_VERIFYPEER, /**< Enable/disable SSL peer verification (bool*) */
 	REQUESTS_SSL_VERIFYHOST, /**< Enable/disable SSL host verification (bool*) */
+	REQUESTS_SSL_VERIFYPEER, /**< Enable/disable SSL peer verification (bool*) */
 	REQUESTS_USERPWD,        /**< Set username:password for authentication (uint8_t*) */
 	REQUESTS_WRITEFUNCTION,  /**< Set callback function for response data (http_response_cb_t*)
 				  */
@@ -74,6 +74,8 @@ struct requests_ctx {
 	uint8_t payload[NET_IPV4_MTU];         /**< Buffer for request payload */
 	uint8_t headers[32];                   /**< Custom HTTP headers */
 	uint8_t protocol[16];                  /**< HTTP protocol version string */
+	bool is_ssl_verifyhost;                /**< Enable/disable SSL host name verification */
+	bool is_ssl_verifypeer;                /**< Enable/disable SSL peer certificate verification */
 	int status_code;                       /**< HTTP response status code */
 	int err;                               /**< Error code from last operation */
 #ifdef CONFIG_REQUESTS_SHELL
