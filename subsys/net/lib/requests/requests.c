@@ -43,8 +43,8 @@ int requests_init(struct requests_ctx *ctx, const uint8_t *url)
 void requests_setopt(struct requests_ctx *ctx, enum requests_options option, void *parameter)
 {
 	switch (option) {
-	case REQUESTS_HTTPHEADER:
-		strncpy(ctx->headers, (uint8_t *)parameter, sizeof(ctx->headers) - 1);
+	case REQUESTS_HTTPHEADERS:
+		ctx->headers = (const char **)parameter;
 		break;
 	case REQUESTS_POSTFIELDS:
 		strncpy(ctx->payload, (uint8_t *)parameter, sizeof(ctx->payload) - 1);
@@ -86,6 +86,7 @@ int requests(struct requests_ctx *ctx, enum http_method method)
 	req.method = method;
 	req.url = ctx->url_fields.uri;
 	req.host = ctx->url_fields.hostname;
+	req.header_fields = ctx->headers;
 	req.protocol = ctx->protocol;
 	req.response = ctx->cb;
 	req.recv_buf = ctx->recv_buf;
