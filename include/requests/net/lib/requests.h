@@ -32,13 +32,14 @@
  * the behavior of HTTP requests.
  */
 enum requests_options {
-	REQUESTS_HTTPHEADERS,    /**< Set custom HTTP headers (uint8_t*) */
-	REQUESTS_POSTFIELDS,     /**< Set POST data payload (uint8_t*) */
-	REQUESTS_PROTOCOL,       /**< Set HTTP protocol version (uint8_t*) */
-	REQUESTS_SSL_VERIFYHOST, /**< Enable/disable SSL host verification (bool*) */
-	REQUESTS_SSL_VERIFYPEER, /**< Enable/disable SSL peer verification (bool*) */
-	REQUESTS_USERPWD,        /**< Set username:password for authentication (uint8_t*) */
-	REQUESTS_WRITEFUNCTION,  /**< Set callback function for response data (http_response_cb_t*)
+	REQUESTS_HTTPHEADERS,     /**< Set custom HTTP headers (uint8_t*) */
+	REQUESTS_POSTFIELDS,      /**< Set POST data payload (uint8_t*) */
+	REQUESTS_POSTFIELDS_SIZE, /**< Set POST data payload size (uint16_t) */
+	REQUESTS_PROTOCOL,        /**< Set HTTP protocol version (uint8_t*) */
+	REQUESTS_SSL_VERIFYHOST,  /**< Enable/disable SSL host verification (bool*) */
+	REQUESTS_SSL_VERIFYPEER,  /**< Enable/disable SSL peer verification (bool*) */
+	REQUESTS_USERPWD,         /**< Set username:password for authentication (uint8_t*) */
+	REQUESTS_WRITEFUNCTION,   /**< Set callback function for response data (http_response_cb_t*)
 				  */
 };
 
@@ -72,6 +73,7 @@ struct requests_ctx {
 	http_response_cb_t cb;                 /**< Callback function for response data */
 	uint8_t recv_buf[NET_IPV4_MTU];        /**< Buffer for receiving data */
 	uint8_t payload[NET_IPV4_MTU];         /**< Buffer for request payload */
+	uint16_t payload_size;                 /**< Size for request payload */
 	uint8_t protocol[16];                  /**< HTTP protocol version string */
 	const char **headers;                  /**< Custom HTTP headers */
 	bool is_ssl_verifyhost;                /**< Enable/disable SSL host name verification */

@@ -49,6 +49,9 @@ void requests_setopt(struct requests_ctx *ctx, enum requests_options option, voi
 	case REQUESTS_POSTFIELDS:
 		strncpy(ctx->payload, (uint8_t *)parameter, sizeof(ctx->payload) - 1);
 		break;
+	case REQUESTS_POSTFIELDS_SIZE:
+		ctx->payload_size = *((uint16_t *)parameter);
+		break;
 	case REQUESTS_PROTOCOL:
 		strncpy(ctx->protocol, (uint8_t *)parameter, sizeof(ctx->protocol) - 1);
 		break;
@@ -94,7 +97,7 @@ int requests(struct requests_ctx *ctx, enum http_method method)
 
 	if (method == HTTP_POST || method == HTTP_PUT) {
 		req.payload = ctx->payload;
-		req.payload_len = sizeof(ctx->payload);
+		req.payload_len = ctx->payload_size;
 	}
 
 	ret = http_client_req(ctx->sockfd, &req, CONFIG_NET_SOCKETS_DNS_TIMEOUT, ctx);
