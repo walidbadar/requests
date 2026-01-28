@@ -5,10 +5,10 @@
 
 ## Overview
 
-The project provides a library that offers a simple interface to perform
-common HTTP operations such as GET, POST, PUT and DELETE over Zephyr’s networking stack.
-It also includes built-in shell commands to interact with HTTP endpoints directly from
-the Zephyr shell.
+The project provides an easy-to-use interface for performing common HTTP(S) operations
+such as GET, POST, PUT and DELETE using Zephyr's networking stack.
+It also includes built-in shell commands to interact with HTTP(S) endpoints directly
+from the Zephyr shell.
 
 ```shell
 uart:~$ requests 
@@ -28,7 +28,6 @@ uart:~$
 #include <zephyr/kernel.h>
 #include <requests/net/lib/requests.h>
 
-/* HTTP response callback */
 static int http_response_handler(struct http_response *rsp, enum http_final_call final_data,
                     void *user_data)
 {
@@ -75,7 +74,6 @@ int main(void)
 #include <zephyr/kernel.h>
 #include <requests/net/lib/requests.h>
 
-/* HTTP response callback */
 static int http_response_handler(struct http_response *rsp, enum http_final_call final_data,
                     void *user_data)
 {
@@ -94,7 +92,13 @@ int main(void)
 	int ret;
 	struct requests_ctx ctx;
 
-	const char *post_body = "{\"msg\":\"hello from zephyr\"}";
+	const char post_body[] = "{\"msg\":\"hello from zephyr\"}";
+	uint16_t post_size = sizeof(post_body);
+
+	const char *headers[] = {
+		"Content-Type: application/json\r\n",
+		NULL
+	};
 
 	printk("HTTP POST example started\n");
 
@@ -104,9 +108,11 @@ int main(void)
 		return 0;
 	}
 
+	requests_setopt(&ctx, REQUESTS_HTTPHEADERS, headers);
 	requests_setopt(&ctx, REQUESTS_PROTOCOL, "HTTP/1.1");
 	requests_setopt(&ctx, REQUESTS_WRITEFUNCTION, http_response_handler);
 	requests_setopt(&ctx, REQUESTS_POSTFIELDS, post_body);
+	requests_setopt(&ctx, REQUESTS_POSTFIELDS_SIZE, &post_size);
 
 	ret = requests(&ctx, HTTP_POST);
 	if (ret < 0) {
