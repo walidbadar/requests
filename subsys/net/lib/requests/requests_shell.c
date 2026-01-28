@@ -147,13 +147,16 @@ static int cmd_requests_delete(const struct shell *sh, size_t argc, char **argv)
 
 SHELL_STATIC_SUBCMD_SET_CREATE(
 	sub_requests,
-	SHELL_CMD_ARG(get, NULL, "Perform HTTP GET request: requests get <url>", cmd_requests_get,
-		      2, 0),
-	SHELL_CMD_ARG(post, NULL, "Perform HTTP POST request: requests post <url> <body>",
+	SHELL_CMD_ARG(get, NULL, SHELL_HELP("Perform HTTP GET request", "<url>"),
+		      cmd_requests_get, 2, 0),
+	SHELL_CMD_ARG(post, NULL,
+		      SHELL_HELP("Perform HTTP POST request", "<url> <body>"),
 		      cmd_requests_post, 3, 0),
-	SHELL_CMD_ARG(put, NULL, "Perform HTTP PUT request: requests put <url> <body>",
+	SHELL_CMD_ARG(put, NULL,
+		      SHELL_HELP("Perform HTTP PUT request", "<url> <body>"),
 		      cmd_requests_put, 3, 0),
-	SHELL_CMD_ARG(delete, NULL, "Perform HTTP DELETE request: requests delete <url>",
+	SHELL_CMD_ARG(delete, NULL,
+		      SHELL_HELP("Perform HTTP DELETE request", "<url>"),
 		      cmd_requests_delete, 2, 0),
 	SHELL_SUBCMD_SET_END);
 
