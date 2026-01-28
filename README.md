@@ -11,14 +11,18 @@ It also includes built-in shell commands to interact with HTTP(S) endpoints dire
 from the Zephyr shell.
 
 ```shell
-uart:~$ requests 
+uart:~$ requests
 requests - HTTP requests commands
 Subcommands:
-  get     : Perform HTTP GET request: requests get <url>
-  post    : Perform HTTP POST request: requests post <url> <body>
-  put     : Perform HTTP PUT request: requests put <url> <body>
-  delete  : Perform HTTP DELETE request: requests delete <url>
-uart:~$ 
+  get     : Perform HTTP GET request
+            Usage: get <url>
+  post    : Perform HTTP POST request
+            Usage: post <url> <body>
+  put     : Perform HTTP PUT request
+            Usage: put <url> <body>
+  delete  : Perform HTTP DELETE request
+            Usage: delete <url>
+uart:~$
 
 ```
 
