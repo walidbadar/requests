@@ -33,11 +33,6 @@ static int cmd_requests_get(const struct shell *sh, size_t argc, char **argv)
 {
 	int ret;
 
-	if (argc < 2) {
-		shell_error(sh, "Usage: requests get <url>");
-		return -EINVAL;
-	}
-
 	struct requests_ctx ctx;
 	ret = requests_init(&ctx, argv[1]);
 	if (ret < 0) {
@@ -61,11 +56,6 @@ static int cmd_requests_get(const struct shell *sh, size_t argc, char **argv)
 static int cmd_requests_post(const struct shell *sh, size_t argc, char **argv)
 {
 	int ret;
-
-	if (argc < 3) {
-		shell_error(sh, "Usage: requests post <url> <body>");
-		return -EINVAL;
-	}
 
 	struct requests_ctx ctx;
 	ret = requests_init(&ctx, argv[1]);
@@ -91,10 +81,7 @@ static int cmd_requests_post(const struct shell *sh, size_t argc, char **argv)
 static int cmd_requests_put(const struct shell *sh, size_t argc, char **argv)
 {
 	int ret;
-	if (argc < 3) {
-		shell_error(sh, "Usage: requests put <url> <body>");
-		return -EINVAL;
-	}
+
 	struct requests_ctx ctx;
 	ret = requests_init(&ctx, argv[1]);
 	if (ret < 0) {
@@ -119,11 +106,6 @@ static int cmd_requests_put(const struct shell *sh, size_t argc, char **argv)
 static int cmd_requests_delete(const struct shell *sh, size_t argc, char **argv)
 {
 	int ret;
-
-	if (argc < 2) {
-		shell_error(sh, "Usage: requests delete <url>");
-		return -EINVAL;
-	}
 
 	struct requests_ctx ctx;
 	ret = requests_init(&ctx, argv[1]);
