@@ -7,7 +7,7 @@ menuconfig REQUESTS
 	select NET_CONNECTION_MANAGER
 	select POSIX_API
 	select HTTP_CLIENT
-	select DNS_RESOLVER
+	imply DNS_RESOLVER
 	help
 	  Enable the requests library for performing HTTP(S) requests.
 
