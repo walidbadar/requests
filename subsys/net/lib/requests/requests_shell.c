@@ -56,6 +56,7 @@ static int cmd_requests_get(const struct shell *sh, size_t argc, char **argv)
 static int cmd_requests_post(const struct shell *sh, size_t argc, char **argv)
 {
 	int ret;
+	uint16_t payload_size = strlen(argv[2]) + 1; 
 
 	struct requests_ctx ctx;
 	ret = requests_init(&ctx, argv[1]);
@@ -68,6 +69,7 @@ static int cmd_requests_post(const struct shell *sh, size_t argc, char **argv)
 	requests_setopt(&ctx, REQUESTS_PROTOCOL, "HTTP/1.1");
 	requests_setopt(&ctx, REQUESTS_WRITEFUNCTION, http_response_handler);
 	requests_setopt(&ctx, REQUESTS_POSTFIELDS, argv[2]);
+	requests_setopt(&ctx, REQUESTS_POSTFIELDS_SIZE, &payload_size);
 
 	ret = requests(&ctx, HTTP_POST);
 	if (ret < 0) {
@@ -81,6 +83,7 @@ static int cmd_requests_post(const struct shell *sh, size_t argc, char **argv)
 static int cmd_requests_put(const struct shell *sh, size_t argc, char **argv)
 {
 	int ret;
+	uint16_t payload_size = strlen(argv[2]) + 1; 
 
 	struct requests_ctx ctx;
 	ret = requests_init(&ctx, argv[1]);
@@ -93,6 +96,7 @@ static int cmd_requests_put(const struct shell *sh, size_t argc, char **argv)
 	requests_setopt(&ctx, REQUESTS_PROTOCOL, "HTTP/1.1");
 	requests_setopt(&ctx, REQUESTS_WRITEFUNCTION, http_response_handler);
 	requests_setopt(&ctx, REQUESTS_POSTFIELDS, argv[2]);
+	requests_setopt(&ctx, REQUESTS_POSTFIELDS_SIZE, &payload_size);
 
 	ret = requests(&ctx, HTTP_PUT);
 	if (ret < 0) {
