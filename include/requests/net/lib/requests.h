@@ -21,8 +21,13 @@
 #include <stdbool.h>
 #include <zephyr/net/conn_mgr_monitor.h>
 #include <zephyr/net/dns_resolve.h>
-#include <zephyr/net/socket.h>
 #include <zephyr/net/http/client.h>
+#include <zephyr/net/socket.h>
+#include <zephyr/posix/arpa/inet.h>
+#include <zephyr/posix/netdb.h>
+#include <zephyr/posix/netinet/in.h>
+#include <zephyr/posix/sys/socket.h>
+#include <zephyr/posix/unistd.h>
 
 /**
  * @enum requests_options

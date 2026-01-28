@@ -4,7 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <zephyr/init.h>
 #include <zephyr/kernel.h>
 #include <requests/net/lib/requests.h>
 #include "requests_private.h"
