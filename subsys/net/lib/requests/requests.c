@@ -19,6 +19,10 @@ int requests_init(struct requests_ctx *ctx, const uint8_t *url)
 	ctx->is_ssl_verifyhost = true;
 	ctx->is_ssl_verifypeer = true;
 
+#if defined(CONFIG_TLS_CREDENTIALS)
+	ctx->sec_tag = CONFIG_REQUESTS_CERTIFICATE_TAG;
+#endif
+
 	ret = requests_url_parser(ctx, url);
 	if (ret < 0) {
 		LOG_ERR("Failed to parse URL (%d)", ret);
@@ -53,7 +57,7 @@ void requests_setopt(struct requests_ctx *ctx, enum requests_options option, voi
 		ctx->is_ssl_verifyhost = *((bool *)parameter);
 		break;
 	case REQUESTS_SSL_VERIFYPEER:
-		ctx->is_ssl_verifypeer = *((bool *)parameter);
+		ctx->is_ssl_verifypeer = *((int *)parameter);
 		break;
 	case REQUESTS_WRITEFUNCTION:
 		ctx->cb = (http_response_cb_t)parameter;

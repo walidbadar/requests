@@ -15,5 +15,6 @@ manifest:
         # strictly needed by the application.
         name-allowlist:
           - picolibc
+          - tf-psa-crypto
           - mbedtls
           - hal_espressif

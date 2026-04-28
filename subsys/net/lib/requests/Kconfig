@@ -23,10 +23,24 @@ config REQUESTS_URL_LEN
 	help
 	  The default URL lenght used for HTTP requests.
 
-config REQUESTS_SSL_CERTS
-	string "Select SSL Certificate"
+config REQUESTS_CERTIFICATE
+	string "HTTP client SSL Certificate"
+	depends on TLS_CREDENTIALS
 	help
-	  The default SSL Certificate used for requests.
+	  Provide filename of the DER-encoded CA certificate,
+	  placed under the <app>/certs/ directory.
+
+	  Example:
+	    CONFIG_REQUESTS_CERTIFICATE="globalsign_r1.der"
+
+config REQUESTS_CERTIFICATE_TAG
+	int "HTTP client SSL Certificate TAG"
+	default 1
+	depends on TLS_CREDENTIALS
+
+config REQUESTS_HAS_CERTIFICATE
+	bool
+	default y if REQUESTS_CERTIFICATE != ""
 
 config REQUESTS_SHELL
 	bool "Enable shell commands"

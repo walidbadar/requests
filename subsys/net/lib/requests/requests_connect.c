@@ -6,12 +6,9 @@
 
 #include <requests/net/lib/requests.h>
 #include "requests_private.h"
-#include "requests_certs.h"
 
 #include <zephyr/logging/log.h>
 LOG_MODULE_REGISTER(requests_connect, CONFIG_REQUESTS_LOG_LEVEL);
-
-#define NET_EVENT_L4_MASK (NET_EVENT_L4_CONNECTED | NET_EVENT_L4_DISCONNECTED)
 
 static struct net_mgmt_event_callback l4_cb;
 static K_SEM_DEFINE(l4_wait, 0, 1);
@@ -207,21 +204,3 @@ int requests_connect(struct requests_ctx *ctx)
 
 	return 0;
 }
-
-static int requests_certs(void)
-{
-	int ret;
-
-	if (IS_ENABLED(CONFIG_NET_SOCKETS_SOCKOPT_TLS)) {
-		ret = tls_credential_add(CA_CERTIFICATE_TAG, TLS_CREDENTIAL_CA_CERTIFICATE,
-					 ca_certificate, sizeof(ca_certificate));
-		if (ret < 0) {
-			LOG_ERR("Failed to register public certificate (%d)", ret);
-			return ret;
-		}
-	}
-
-	return 0;
-}
-
-SYS_INIT(requests_certs, APPLICATION, 95);
