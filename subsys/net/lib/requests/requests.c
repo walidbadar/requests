@@ -16,13 +16,8 @@ int requests_init(struct requests_ctx *ctx, const uint8_t *url)
 	int ret;
 	memset(ctx, 0, sizeof(struct requests_ctx));
 
-	if (IS_ENABLED(CONFIG_REQUESTS_SSL_VERIFYHOST)) {
-		ctx->is_ssl_verifyhost = true;
-	}
-
-	if (IS_ENABLED(CONFIG_REQUESTS_SSL_VERIFYPEER)) {
-		ctx->is_ssl_verifypeer = true;
-	}
+	ctx->is_ssl_verifyhost = true;
+	ctx->is_ssl_verifypeer = true;
 
 	ret = requests_url_parser(ctx, url);
 	if (ret < 0) {

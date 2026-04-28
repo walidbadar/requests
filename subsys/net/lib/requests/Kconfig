@@ -25,34 +25,10 @@ config REQUESTS_URL_LEN
 	help
 	  The default URL lenght used for HTTP requests.
 
-config REQUESTS_HTTP_PORT
-	int "Default HTTP port"
-	default 80
-	help
-	  The default port used for HTTP requests.
-
-config REQUESTS_HTTPS_PORT
-	int "Default HTTPS port"
-	default 443
-	help
-	  The default port used for HTTPS requests.
-
 config REQUESTS_SSL_CERTS
 	string "Select SSL Certificate"
 	help
 	  The default SSL Certificate used for requests.
-
-config REQUESTS_SSL_VERIFYHOST
-	bool "Verify SSL host name"
-	default y
-	help
-	  Validate the server host name against the certificate.
-
-config REQUESTS_SSL_VERIFYPEER
-	bool "Verify SSL peer certificate"
-	default y
-	help
-	  Validate the server SSL/TLS certificate.
 
 config REQUESTS_SHELL
 	bool "Enable shell commands"

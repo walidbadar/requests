@@ -14,7 +14,7 @@ LOG_MODULE_REGISTER(requests_connect, CONFIG_REQUESTS_LOG_LEVEL);
 #define NET_EVENT_L4_MASK (NET_EVENT_L4_CONNECTED | NET_EVENT_L4_DISCONNECTED)
 
 static struct net_mgmt_event_callback l4_cb;
-static K_SEM_DEFINE(ipv4_wait, 0, 1);
+static K_SEM_DEFINE(l4_wait, 0, 1);
 static K_SEM_DEFINE(dns_wait, 0, 1);
 
 static void net_event_l4_handler(struct net_mgmt_event_callback *cb, uint64_t status,
@@ -23,7 +23,7 @@ static void net_event_l4_handler(struct net_mgmt_event_callback *cb, uint64_t st
 	switch (status) {
 	case NET_EVENT_L4_CONNECTED:
 		LOG_DBG("Network connection established (IPv4)");
-		k_sem_give(&ipv4_wait);
+		k_sem_give(&l4_wait);
 		break;
 	case NET_EVENT_L4_DISCONNECTED:
 		break;
@@ -86,7 +86,7 @@ int requests_dns_lookup(struct requests_ctx *ctx)
 
 	LOG_DBG("Waiting for IPv4 address assignment (DHCP/Static)");
 
-	ret = k_sem_take(&ipv4_wait, K_MSEC(CONFIG_NET_SOCKETS_CONNECT_TIMEOUT));
+	ret = k_sem_take(&l4_wait, K_MSEC(CONFIG_NET_SOCKETS_CONNECT_TIMEOUT));
 	if (ret < 0) {
 		LOG_ERR("Cannot resolve IPv4 address (%d)", ret);
 		return ret;

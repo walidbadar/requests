@@ -11,6 +11,9 @@
 #include <zephyr/logging/log.h>
 LOG_MODULE_REGISTER(requests_parser, CONFIG_REQUESTS_LOG_LEVEL);
 
+#define DEFAULT_HTTPS_PORT 443
+#define DEFAULT_HTTP_PORT  80
+
 /* TODO: Replace with http_parser_url.c*/
 static int requests_url_fields_get(const uint8_t *url, const struct http_parser_url *purl,
 				   enum http_parser_url_fields url_field, uint8_t *field,
@@ -45,7 +48,6 @@ int requests_url_parser(struct requests_ctx *ctx, const uint8_t *url)
 	uint8_t port_ascii[6];
 
 	http_parser_url_init(&purl);
-
 	ret = http_parser_parse_url(url, strlen(url), 0, &purl);
 	if (ret < 0) {
 		LOG_ERR("Error parsing URL (%d)", ret);
@@ -69,9 +71,9 @@ int requests_url_parser(struct requests_ctx *ctx, const uint8_t *url)
 	ret = requests_url_fields_get(url, &purl, UF_PORT, port_ascii, sizeof(port_ascii));
 	if (ret < 0) {
 		if (IS_ENABLED(CONFIG_NET_SOCKETS_SOCKOPT_TLS)) {
-			*port = CONFIG_REQUESTS_HTTPS_PORT;
+			*port = DEFAULT_HTTPS_PORT;
 		} else {
-			*port = CONFIG_REQUESTS_HTTP_PORT;
+			*port = DEFAULT_HTTP_PORT;
 		}
 	} else {
 		*port = atoi(port_ascii);
