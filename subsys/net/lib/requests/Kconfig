@@ -3,11 +3,9 @@
 
 menuconfig REQUESTS
 	bool "Enable Requests library Support"
-	depends on NETWORKING
-	select NET_CONNECTION_MANAGER
-	select POSIX_API
 	select HTTP_CLIENT
-	imply DNS_RESOLVER
+	select DNS_RESOLVER
+	select NET_CONNECTION_MANAGER
 	help
 	  Enable the requests library for performing HTTP(S) requests.
 

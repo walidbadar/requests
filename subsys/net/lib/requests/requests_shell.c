@@ -15,11 +15,10 @@ static int http_response_handler(struct http_response *rsp, enum http_final_call
 				 void *user_data)
 {
 	struct requests_ctx *ctx = (struct requests_ctx *)user_data;
-	ctx->status_code = rsp->http_status_code;
 
-	if (!ctx->status_code) {
-		shell_warn(ctx->sh, "HTTP Status Code: %d", ctx->status_code);
-		return 0;
+	if (rsp->http_status_code == 0) {
+		LOG_WRN("No HTTP response received");
+		return -ENODATA;
 	}
 
 	if (rsp->body_frag_len) {

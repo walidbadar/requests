@@ -45,6 +45,7 @@ int requests_url_parser(struct requests_ctx *ctx, const uint8_t *url)
 	uint8_t *hostname = ctx->url_fields.hostname;
 	uint16_t *port = &ctx->url_fields.port;
 	uint8_t *uri = ctx->url_fields.uri;
+	bool *is_ssl = &ctx->url_fields.is_ssl;
 	uint8_t port_ascii[6];
 
 	http_parser_url_init(&purl);
@@ -59,6 +60,10 @@ int requests_url_parser(struct requests_ctx *ctx, const uint8_t *url)
 	if (ret < 0) {
 		LOG_ERR("Error parsing schema (%d)", ret);
 		return ret;
+	}
+
+	if (memcmp(schema, "https", sizeof("https")) == 0) {
+		*is_ssl = true;
 	}
 
 	ret = requests_url_fields_get(url, &purl, UF_HOST, hostname,

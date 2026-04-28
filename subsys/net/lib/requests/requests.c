@@ -95,7 +95,7 @@ int requests(struct requests_ctx *ctx, enum http_method method)
 	}
 
 	ret = http_client_req(ctx->sockfd, &req, CONFIG_NET_SOCKETS_DNS_TIMEOUT, ctx);
-	close(ctx->sockfd);
+	zsock_close(ctx->sockfd);
 
 	return ret;
 }

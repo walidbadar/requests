@@ -35,17 +35,14 @@ static void net_event_l4_handler(struct net_mgmt_event_callback *cb, uint64_t st
 void requests_dns_cb(enum dns_resolve_status status, struct dns_addrinfo *info, void *user_data)
 {
 	struct requests_ctx *ctx = (struct requests_ctx *)user_data;
-	uint8_t hr_addr[NET_IPV4_ADDR_LEN];
 
 	switch (status) {
 	case DNS_EAI_CANCELED:
 	case DNS_EAI_FAIL:
 	case DNS_EAI_NODATA:
-		LOG_ERR("DNS resolve (%d)", status);
 		break;
 
 	case DNS_EAI_ALLDONE:
-		LOG_DBG("DNS resolved");
 		k_sem_give(&dns_wait);
 		break;
 
@@ -53,56 +50,66 @@ void requests_dns_cb(enum dns_resolve_status status, struct dns_addrinfo *info, 
 		break;
 	}
 
-	if (!info) {
+	if (info == NULL) {
 		return;
 	}
 
-	if (info->ai_family == AF_INET) {
-		ctx->sa = info->ai_addr;
-		ctx->err = 0;
-	} else {
-		LOG_ERR("Invalid IP address family %d", info->ai_family);
+	if (info->ai_family != NET_AF_INET && info->ai_family != NET_AF_INET6) {
+		LOG_ERR("Invalid IP address family (%d)", info->ai_family);
 		ctx->err = -EINVAL;
+		return;
 	}
 
-	LOG_DBG("Host IPv4 address: %s",
-		net_addr_ntop(info->ai_family, &net_sin(&ctx->sa)->sin_addr, hr_addr,
-			      sizeof(hr_addr)));
+	ctx->sa = *(net_sas(&info->ai_addr));
+	ctx->sa.ss_family = info->ai_family;
+	ctx->err = 0;
+}
+
+static int requests_dns_get_info(struct requests_ctx *ctx, enum dns_query_type type)
+{
+	int ret;
+	uint16_t dns_id;
+
+	ret = dns_get_addr_info(ctx->url_fields.hostname, type, &dns_id, requests_dns_cb,
+				(void *)ctx, CONFIG_NET_SOCKETS_DNS_TIMEOUT);
+	if (ret < 0) {
+		return ret;
+	}
+
+	ret = k_sem_take(&dns_wait, K_MSEC(CONFIG_NET_SOCKETS_DNS_TIMEOUT));
+	if (ret < 0) {
+		return ret;
+	}
+
+	return ctx->err;
 }
 
 int requests_dns_lookup(struct requests_ctx *ctx)
 {
 	int ret;
-	uint16_t dns_id;
 
-	if (!strlen(ctx->url_fields.hostname)) {
+	if (!ctx->url_fields.hostname[0]) {
 		LOG_ERR("Invalid hostname");
 		return -EINVAL;
 	}
 
-	net_mgmt_init_event_callback(&l4_cb, net_event_l4_handler, NET_EVENT_L4_MASK);
+	net_mgmt_init_event_callback(&l4_cb, net_event_l4_handler,
+				     NET_EVENT_L4_CONNECTED | NET_EVENT_L4_DISCONNECTED);
 	net_mgmt_add_event_callback(&l4_cb);
 	conn_mgr_mon_resend_status();
 
-	LOG_DBG("Waiting for IPv4 address assignment (DHCP/Static)");
-
 	ret = k_sem_take(&l4_wait, K_MSEC(CONFIG_NET_SOCKETS_CONNECT_TIMEOUT));
 	if (ret < 0) {
-		LOG_ERR("Cannot resolve IPv4 address (%d)", ret);
+		LOG_ERR("Failed to resolve IP address (%d)", ret);
 		return ret;
 	}
 
-	ret = dns_get_addr_info(ctx->url_fields.hostname, DNS_QUERY_TYPE_A, &dns_id,
-				requests_dns_cb, (void *)ctx, CONFIG_NET_SOCKETS_DNS_TIMEOUT);
-	if (ret < 0) {
-		LOG_ERR("Cannot resolve DNS address (%d)", ret);
-	} else {
-		ret = k_sem_take(&dns_wait, K_MSEC(CONFIG_NET_SOCKETS_DNS_TIMEOUT));
-		if (ret < 0) {
-			return ret;
-		}
+	if (IS_ENABLED(CONFIG_NET_IPV4)) {
+		ret = requests_dns_get_info(ctx, DNS_QUERY_TYPE_A);
+	}
 
-		ret = ctx->err;
+	if (IS_ENABLED(CONFIG_NET_IPV6) && ctx->sa.ss_family == NET_AF_UNSPEC) {
+		ret = requests_dns_get_info(ctx, DNS_QUERY_TYPE_AAAA);
 	}
 
 	return ret;
@@ -110,51 +117,59 @@ int requests_dns_lookup(struct requests_ctx *ctx)
 
 static int requests_connect_setup(struct requests_ctx *ctx)
 {
+	bool is_ssl = ctx->url_fields.is_ssl;
+
+	ctx->sockfd = zsock_socket(ctx->sa.ss_family, NET_SOCK_STREAM,
+				   is_ssl ? NET_IPPROTO_TLS_1_2 : NET_IPPROTO_TCP);
+	if (ctx->sockfd < 0) {
+		LOG_ERR("Failed to create socket (%d)", -ECONNABORTED);
+		return -ECONNABORTED;
+	}
+
+#if defined(CONFIG_NET_SOCKETS_SOCKOPT_TLS)
 	int ret;
 
-	if (IS_ENABLED(CONFIG_NET_SOCKETS_SOCKOPT_TLS)) {
-		ctx->sockfd = socket(AF_INET, SOCK_STREAM, IPPROTO_TLS_1_2);
-	} else {
-		ctx->sockfd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-	}
-
-	if (ctx->sockfd < 0) {
-		LOG_ERR("Failed to create socket (%d)", -errno);
-		return -errno;
-	}
-
-	if (IS_ENABLED(CONFIG_NET_SOCKETS_SOCKOPT_TLS)) {
-		sec_tag_t sec_tag_list[] = {
-			CA_CERTIFICATE_TAG,
-		};
-
-		if (ctx->is_ssl_verifyhost) {
-			ret = setsockopt(ctx->sockfd, SOL_TLS, TLS_HOSTNAME,
-						ctx->url_fields.hostname,
-						sizeof(ctx->url_fields.hostname));
-			if (ret < 0) {
-				LOG_ERR("Failed to set TLS_HOSTNAME %s option (%d)",
-					ctx->url_fields.hostname, ret);
-				return ret;
-			}
-		}
-
-		if (ctx->is_ssl_verifypeer) {
-			ret = setsockopt(ctx->sockfd, SOL_TLS, TLS_SEC_TAG_LIST, sec_tag_list,
-					 sizeof(sec_tag_list));
-			if (ret < 0) {
-				LOG_ERR("Failed to set TLS_SEC_TAG_LIST option (%d)", ret);
-				return ret;
-			}
-		} else {
-			ret = setsockopt(ctx->sockfd, SOL_TLS, TLS_PEER_VERIFY,
-					 (int *)&ctx->is_ssl_verifypeer, sizeof(int));
-			if (ret < 0) {
-				LOG_ERR("Failed to set TLS_PEER_VERIFY option (%d)", ret);
-				return ret;
-			}
+	if (ctx->is_ssl_verifyhost && is_ssl) {
+		ret = zsock_setsockopt(ctx->sockfd, ZSOCK_SOL_TLS, ZSOCK_TLS_HOSTNAME,
+				       ctx->url_fields.hostname, strlen(ctx->url_fields.hostname));
+		if (ret < 0) {
+			LOG_ERR("Failed to set TLS_HOSTNAME %s option (%d)",
+				 ctx->url_fields.hostname, ret);
+			return ret;
 		}
 	}
+
+	if (ctx->is_ssl_verifyhost == 0) {
+		LOG_WRN("Hostname verification is disabled");
+
+		ret = zsock_setsockopt(ctx->sockfd, ZSOCK_SOL_TLS, ZSOCK_TLS_HOSTNAME, NULL, 0);
+		if (ret < 0) {
+			LOG_ERR("Failed to set TLS_HOSTNAME %s option (%d)",
+				 ctx->url_fields.hostname, ret);
+			return ret;
+		}
+	}
+
+	if (ctx->is_ssl_verifypeer && is_ssl) {
+		ret = zsock_setsockopt(ctx->sockfd, ZSOCK_SOL_TLS, ZSOCK_TLS_SEC_TAG_LIST,
+				       &ctx->sec_tag, sizeof(int));
+		if (ret < 0) {
+			LOG_ERR("Failed to set TLS_SEC_TAG_LIST option (%d)", ret);
+			return ret;
+		}
+	}
+
+	if (ctx->is_ssl_verifypeer == 0) {
+		LOG_WRN("TLS verification is disabled");
+
+		ret = zsock_setsockopt(ctx->sockfd, ZSOCK_SOL_TLS, ZSOCK_TLS_PEER_VERIFY,
+				       &ctx->is_ssl_verifypeer, sizeof(int));
+		if (ret < 0) {
+			LOG_ERR("Failed to set TLS_PEER_VERIFY option (%d)", ret);
+			return ret;
+		}
+	}
+#endif
 
 	return 0;
 }
@@ -162,6 +177,8 @@ static int requests_connect_setup(struct requests_ctx *ctx)
 int requests_connect(struct requests_ctx *ctx)
 {
 	int ret;
+	struct net_sockaddr_in *sa_in;
+	struct net_sockaddr_in6 *sa_in6;
 
 	ret = requests_connect_setup(ctx);
 	if (ret < 0) {
@@ -169,19 +186,26 @@ int requests_connect(struct requests_ctx *ctx)
 		return -ECONNABORTED;
 	}
 
-	struct sockaddr_in *sa_in = (struct sockaddr_in *)&ctx->sa;
-	sa_in->sin_port = htons(ctx->url_fields.port);
-	sa_in->sin_family = AF_INET;
-
-	ret = connect(ctx->sockfd, (struct sockaddr *)sa_in, sizeof(*sa_in));
-	if (ret < 0) {
-		LOG_ERR("Cannot connect to remote (%d)", -errno);
-		close(ctx->sockfd);
-		ctx->sockfd = -1;
-		ret = -ECONNABORTED;
+	if (ctx->sa.ss_family == NET_AF_INET) {
+		sa_in = (struct net_sockaddr_in *)(&ctx->sa);
+		sa_in->sin_port = net_htons(ctx->url_fields.port);
+	} else if (ctx->sa.ss_family == NET_AF_INET6) {
+		sa_in6 = (struct net_sockaddr_in6 *)(&ctx->sa);
+		sa_in6->sin6_port = net_htons(ctx->url_fields.port);
+	} else {
+		LOG_ERR("Invalid IP address family (%d)", ctx->sa.ss_family);
+		return -EINVAL;
 	}
 
-	return ret;
+	ret = zsock_connect(ctx->sockfd, net_sad(&ctx->sa), net_family2size(ctx->sa.ss_family));
+	if (ret < 0) {
+		LOG_ERR("Failed to connect to remote (%d)", -ECONNABORTED);
+		zsock_close(ctx->sockfd);
+		ctx->sockfd = -1;
+		return -ECONNABORTED;
+	}
+
+	return 0;
 }
 
 static int requests_certs(void)

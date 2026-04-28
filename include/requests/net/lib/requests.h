@@ -29,6 +29,9 @@
 #include <zephyr/posix/sys/socket.h>
 #include <zephyr/posix/unistd.h>
 
+#define HTTP_SCHEMA_LEN   sizeof("https://")
+#define HTTP_PROTOCOL_LEN sizeof("HTTP/1.1")
+
 /**
  * @enum requests_options
  * @brief Configuration options for HTTP requests
@@ -56,8 +59,8 @@ enum requests_options {
  * including schema, hostname, URI path, port, and SSL flag.
  */
 struct requests_url_fields {
-	uint8_t schema[8];                    /**< URL schema (e.g., "http", "https") */
-	uint8_t hostname[NI_MAXHOST];         /**< Hostname or IP address */
+	uint8_t schema[HTTP_SCHEMA_LEN];      /**< URL schema (e.g., "http", "https") */
+	uint8_t hostname[ZSOCK_NI_MAXHOST];         /**< Hostname or IP address */
 	uint8_t uri[CONFIG_REQUESTS_URL_LEN]; /**< URI path component */
 	uint16_t port; /**< Port number (default: 80 for HTTP, 443 for HTTPS) */
 	bool is_ssl;   /**< True if HTTPS, false if HTTP */
@@ -72,18 +75,18 @@ struct requests_url_fields {
  */
 struct requests_ctx {
 	int sockfd;                            /**< Socket file descriptor */
-	struct sockaddr sa;                    /**< Socket address structure */
+	struct net_sockaddr_storage sa;        /**< Socket address storage structure */
 	struct requests_url_fields url_fields; /**< Parsed URL components */
 	enum http_method method;               /**< HTTP method (GET, POST, etc.) */
 	http_response_cb_t cb;                 /**< Callback function for response data */
 	uint8_t recv_buf[NET_IPV4_MTU];        /**< Buffer for receiving data */
 	uint8_t payload[NET_IPV4_MTU];         /**< Buffer for request payload */
 	uint16_t payload_size;                 /**< Size for request payload */
-	uint8_t protocol[16];                  /**< HTTP protocol version string */
+	uint8_t protocol[HTTP_PROTOCOL_LEN];   /**< HTTP protocol version string */
 	const char **headers;                  /**< Custom HTTP headers */
 	bool is_ssl_verifyhost;                /**< Enable/disable SSL host name verification */
-	bool is_ssl_verifypeer;                /**< Enable/disable SSL peer certificate verification */
-	int status_code;                       /**< HTTP response status code */
+	int is_ssl_verifypeer;                 /**< Enable/disable SSL peer certificate verification */
+	int sec_tag;                           /**< Security tag for TLS */
 	int err;                               /**< Error code from last operation */
 #ifdef CONFIG_REQUESTS_SHELL
 	struct shell *sh; /**< Shell instance for debug output */
