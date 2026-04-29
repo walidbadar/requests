@@ -53,6 +53,9 @@ void requests_setopt(struct requests_ctx *ctx, enum requests_options option, voi
 	case REQUESTS_PROTOCOL:
 		strncpy(ctx->protocol, (uint8_t *)parameter, sizeof(ctx->protocol) - 1);
 		break;
+	case REQUESTS_SSL_CERTIFICATE_TAG:
+		ctx->sec_tag = *((int *)parameter);
+		break;
 	case REQUESTS_SSL_VERIFYHOST:
 		ctx->is_ssl_verifyhost = *((bool *)parameter);
 		break;
@@ -80,7 +83,7 @@ int requests(struct requests_ctx *ctx, enum http_method method)
 
 	ret = requests_connect(ctx);
 	if (ret < 0) {
-		LOG_ERR("Cannot connect to remote (%d)", -errno);
+		LOG_ERR("Cannot connect to remote (%d)", ret);
 		return ret;
 	}
 
@@ -98,7 +101,7 @@ int requests(struct requests_ctx *ctx, enum http_method method)
 		req.payload_len = ctx->payload_size;
 	}
 
-	ret = http_client_req(ctx->sockfd, &req, CONFIG_NET_SOCKETS_DNS_TIMEOUT, ctx);
+	ret = http_client_req(ctx->sockfd, &req, CONFIG_NET_SOCKETS_CONNECT_TIMEOUT, ctx);
 	zsock_close(ctx->sockfd);
 
 	return ret;
