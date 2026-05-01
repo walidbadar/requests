@@ -18,6 +18,7 @@
 #ifndef LIB_REQUESTS_H_
 #define LIB_REQUESTS_H_
 
+#include <stdio.h>
 #include <stdbool.h>
 #include <zephyr/net/conn_mgr_monitor.h>
 #include <zephyr/net/dns_resolve.h>
@@ -89,9 +90,7 @@ struct requests_ctx {
 	int is_ssl_verifypeer; /**< Enable/disable SSL peer certificate verification */
 	int sec_tag;           /**< Security tag for TLS */
 	int err;               /**< Error code from last operation */
-#ifdef CONFIG_REQUESTS_SHELL
-	struct shell *sh; /**< Shell instance for debug output */
-#endif
+	const struct shell *sh; /**< Shell instance for debug output */
 };
 
 /**

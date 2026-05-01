@@ -136,7 +136,7 @@ static int requests_connect_setup(struct requests_ctx *ctx)
 		}
 	}
 
-	if (ctx->is_ssl_verifyhost == 0) {
+	if (ctx->is_ssl_verifyhost == 0 && is_ssl) {
 		LOG_WRN("Hostname verification is disabled");
 
 		ret = zsock_setsockopt(ctx->sockfd, ZSOCK_SOL_TLS, ZSOCK_TLS_HOSTNAME, NULL, 0);
@@ -156,7 +156,7 @@ static int requests_connect_setup(struct requests_ctx *ctx)
 		}
 	}
 
-	if (ctx->is_ssl_verifypeer == 0) {
+	if (ctx->is_ssl_verifypeer == 0 && is_ssl) {
 		LOG_WRN("TLS verification is disabled");
 
 		ret = zsock_setsockopt(ctx->sockfd, ZSOCK_SOL_TLS, ZSOCK_TLS_PEER_VERIFY,

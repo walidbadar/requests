@@ -45,13 +45,13 @@ void requests_setopt(struct requests_ctx *ctx, enum requests_options option, voi
 		ctx->headers = (const char **)parameter;
 		break;
 	case REQUESTS_POSTFIELDS:
-		strncpy(ctx->payload, (uint8_t *)parameter, sizeof(ctx->payload) - 1);
+		strncpy(ctx->payload, (uint8_t *)parameter, sizeof(ctx->payload));
 		break;
 	case REQUESTS_POSTFIELDS_SIZE:
 		ctx->payload_size = *((uint16_t *)parameter);
 		break;
 	case REQUESTS_PROTOCOL:
-		strncpy(ctx->protocol, (uint8_t *)parameter, sizeof(ctx->protocol) - 1);
+		strncpy(ctx->protocol, (uint8_t *)parameter, sizeof(ctx->protocol));
 		break;
 	case REQUESTS_SSL_CERTIFICATE_TAG:
 		ctx->sec_tag = *((int *)parameter);
