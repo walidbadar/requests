@@ -1,13 +1,13 @@
 config ALIF_ENDPOINT
 	string "Default API endpoint URL"
-	default "https://api.doubleword.ai/v1/chat/completions"
+	default "http://192.0.2.2:11434/api/chat"
 	help
 	  The default HTTP API endpoint used for Alif chat completion
 	  requests.
 
 config ALIF_MODEL
 	string "Default model name"
-	default "Qwen/Qwen3-VL-30B-A3B-Instruct-FP8"
+	default "qwen2.5:7b"
 	help
 	  The default AI model identifier sent to the API when making
 	  chat completion requests.

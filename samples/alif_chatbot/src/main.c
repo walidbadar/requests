@@ -10,9 +10,6 @@
 
 #define PROMPT_KEY "\"content\":\""
 
-BUILD_ASSERT(sizeof(CONFIG_ALIF_TOKEN) > 1,
-	     "CONFIG_ALIF_TOKEN is empty. Please set using menuconfig.");
-
 static int alif_json_parser(const char *json, const char *key, char *out, size_t out_size)
 {
 	const char *start = strstr(json, key);
@@ -41,10 +38,9 @@ static int alif_response(struct http_response *rsp, enum http_final_call final_d
 			 void *user_data)
 {
 	struct requests_ctx *ctx = (struct requests_ctx *)user_data;
-	ctx->status_code = rsp->http_status_code;
 
-	if (!ctx->status_code) {
-		shell_warn(ctx->sh, "HTTP Status Code: %d", ctx->status_code);
+	if (rsp->http_status_code == 0) {
+		shell_warn(ctx->sh, "HTTP Status Code: %d", rsp->http_status_code );
 	}
 
 	return 0;
@@ -53,6 +49,7 @@ static int alif_response(struct http_response *rsp, enum http_final_call final_d
 static int alif_ask(const struct shell *sh, size_t argc, char **argv)
 {
 	int ret;
+	int ssl_verifypeer = 0;
 
 	const char *headers[] = {"User-Agent: curl/7.81.0\r\n", "Accept: */*\r\n",
 				 "Content-Type: application/json\r\n",
@@ -61,6 +58,7 @@ static int alif_ask(const struct shell *sh, size_t argc, char **argv)
 	char prompt[512];
 	int prompt_lenght = snprintf(prompt, sizeof(prompt),
 				  "{\"model\":\"%s\","
+				  "\"stream\": false,"
 				  "\"messages\":[{\"role\":\"user\",\"content\":\"%s\"}]}",
 				  CONFIG_ALIF_MODEL, argv[1]);
 
@@ -71,12 +69,12 @@ static int alif_ask(const struct shell *sh, size_t argc, char **argv)
 		return ret;
 	}
 
-	ctx.sh = (struct shell *)sh;
 	requests_setopt(&ctx, REQUESTS_HTTPHEADERS, headers);
 	requests_setopt(&ctx, REQUESTS_PROTOCOL, "HTTP/1.1");
+	requests_setopt(&ctx, REQUESTS_SSL_VERIFYPEER, &ssl_verifypeer);
 	requests_setopt(&ctx, REQUESTS_WRITEFUNCTION, alif_response);
-	requests_setopt(&ctx, REQUESTS_POSTFIELDS, prompt);
 	requests_setopt(&ctx, REQUESTS_POSTFIELDS_SIZE, &prompt_lenght);
+	requests_setopt(&ctx, REQUESTS_POSTFIELDS, prompt);
 
 	ret = requests(&ctx, HTTP_POST);
 	if (ret < 0) {
@@ -85,7 +83,7 @@ static int alif_ask(const struct shell *sh, size_t argc, char **argv)
 	}
 
 	alif_json_parser(ctx.recv_buf, PROMPT_KEY, prompt, sizeof(prompt));
-	shell_print(ctx.sh, "%s", prompt);
+	shell_print(sh, "%s", prompt);
 
 	return 0;
 }
